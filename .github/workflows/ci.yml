@@ -1,0 +1,45 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff — lint
+        run: ruff check .
+
+      - name: Ruff — format check
+        run: ruff format --check .
+
+      - name: Run pytest
+        run: pytest tests/ -v --tb=short
+
+      # -----------------------------------------------------------------------
+      # SonarCloud static analysis
+      # Uncomment this step once you have:
+      #   1. Created a project at https://sonarcloud.io
+      #   2. Added SONAR_TOKEN to your GitHub repository Secrets
+      # -----------------------------------------------------------------------
+      # - name: SonarCloud Scan
+      #   uses: SonarSource/sonarcloud-github-action@master
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # Grants PR decoration
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}     # SonarCloud project token
