@@ -54,9 +54,13 @@ def _dsn() -> str | None:
     )
 
 
+API_KEY = os.getenv("FINANCE_API_KEY", "")
+
+
 @pytest.fixture(scope="module")
 def client() -> httpx.Client:
-    with httpx.Client(base_url=BASE_URL, timeout=15.0) as c:
+    headers = {"X-API-Key": API_KEY} if API_KEY else {}
+    with httpx.Client(base_url=BASE_URL, timeout=15.0, headers=headers) as c:
         yield c
 
 
@@ -148,3 +152,8 @@ def test_create_invalid_type_returns_422(client: httpx.Client) -> None:
         json={"amount": 1.0, "type": "invalid", "description": f"{NS} bad"},
     )
     assert r.status_code == 422
+
+
+def test_missing_api_key_returns_401(client: httpx.Client) -> None:
+    r = client.get("/api/v1/balance", headers={"X-API-Key": ""})
+    assert r.status_code == 401

@@ -76,6 +76,23 @@ pytest tests/ -v
 | GET    | `/api/v1/balance`       | Resumen financiero (ingresos/egresos)    |
 | GET    | `/health`               | Health check                             |
 
+> Los endpoints `/api/v1/*` requieren el header **`X-API-Key`** (ver Autenticación).
+> `/health` y `/docs` quedan abiertos.
+
+## Autenticación
+
+Los endpoints de datos (`/api/v1/*`) están protegidos con una **API key**. Manda la
+clave en el header `X-API-Key`:
+
+```bash
+curl -H "X-API-Key: TU_CLAVE" https://oswalbot.itelcore.org/api/v1/balance
+```
+
+En **Swagger UI** (`/docs`): clic en **Authorize** (arriba a la derecha), pega la clave
+y ya puedes probar los endpoints. `/health` y `/docs` no requieren clave.
+
+La clave se configura en el `.env` del servidor (`API_KEY=...`, ver `.env.example`).
+
 ### Ejemplo — Crear transacción
 
 ```json

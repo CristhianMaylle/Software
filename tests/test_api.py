@@ -133,3 +133,27 @@ def test_health_check(client: TestClient) -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Autenticación (API key)
+# ---------------------------------------------------------------------------
+
+
+def test_missing_api_key_returns_401(client: TestClient) -> None:
+    response = client.get("/api/v1/balance", headers={"X-API-Key": ""})
+    assert response.status_code == 401
+
+
+def test_wrong_api_key_returns_401(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/transactions",
+        headers={"X-API-Key": "definitely-wrong"},
+        json={"amount": 10.0, "type": "ingreso", "description": "nope"},
+    )
+    assert response.status_code == 401
+
+
+def test_health_is_open_without_api_key(client: TestClient) -> None:
+    response = client.get("/health", headers={"X-API-Key": ""})
+    assert response.status_code == 200

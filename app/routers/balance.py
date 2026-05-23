@@ -5,8 +5,13 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Transaction
 from app.schemas import BalanceResponse
+from app.security import require_api_key
 
-router = APIRouter(prefix="/api/v1/balance", tags=["Balance"])
+router = APIRouter(
+    prefix="/api/v1/balance",
+    tags=["Balance"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 @router.get("", response_model=BalanceResponse, summary="Get current financial summary")
