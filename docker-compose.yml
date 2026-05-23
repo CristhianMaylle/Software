@@ -33,6 +33,20 @@ services:
       - "traefik.http.routers.finance.rule=Host(`oswalbot.itelcore.org`)"
       - "traefik.http.routers.finance.entrypoints=websecure"
       - "traefik.http.routers.finance.tls=true"
+      # --- Protección: rate limit por IP real del cliente + security headers ---
+      - "traefik.http.routers.finance.middlewares=finance-ratelimit,finance-headers"
+      # Rate limit: 60 req/min sostenido, ráfaga 20, por IP real (header Cf-Connecting-Ip
+      # que inyecta Cloudflare; sin él, Traefik solo vería la IP del edge de CF).
+      - "traefik.http.middlewares.finance-ratelimit.ratelimit.average=60"
+      - "traefik.http.middlewares.finance-ratelimit.ratelimit.period=1m"
+      - "traefik.http.middlewares.finance-ratelimit.ratelimit.burst=20"
+      - "traefik.http.middlewares.finance-ratelimit.ratelimit.sourcecriterion.requestheadername=Cf-Connecting-Ip"
+      # Security headers (defensa en profundidad; Cloudflare ya añade varios).
+      - "traefik.http.middlewares.finance-headers.headers.stsseconds=31536000"
+      - "traefik.http.middlewares.finance-headers.headers.stsincludesubdomains=true"
+      - "traefik.http.middlewares.finance-headers.headers.contenttypenosniff=true"
+      - "traefik.http.middlewares.finance-headers.headers.referrerpolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.finance-headers.headers.framedeny=true"
     networks:
       - default
       - web
