@@ -3,10 +3,11 @@ Patch the database engine to SQLite in-memory BEFORE app.main is imported.
 This ensures no SQL Server connection is needed to run the test suite.
 """
 
-import app.database as _db
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+import app.database as _db
 
 _test_engine = create_engine(
     "sqlite:///:memory:",

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 try:
@@ -12,38 +12,24 @@ except ImportError:
     pass
 
 DB_SERVER = os.getenv("DB_SERVER", "localhost")
-DB_PORT = os.getenv("DB_PORT", "1433")
-DB_NAME = os.getenv("DB_NAME", "FinanceControl")
-DB_USER = os.getenv("DB_USER", "sa")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "YourPassword!123")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "finance_control")
+DB_USER = os.getenv("DB_USER", "finance")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "finance_secret")
 
-_OPTS = "driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+# PostgreSQL via psycopg 3 (driver name "psycopg" in SQLAlchemy 2.0).
 DATABASE_URL = (
-    f"mssql+pyodbc://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}:{DB_PORT}/{DB_NAME}?{_OPTS}"
+    f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}:{DB_PORT}/{DB_NAME}"
 )
 
-engine = create_engine(DATABASE_URL, echo=False)
+# pool_pre_ping recicla conexiones muertas (el server cierra idle connections);
+# evita errores "server closed the connection unexpectedly" en runtime largo.
+engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class Base(DeclarativeBase):
     pass
-
-
-def ensure_database() -> None:
-    """Create the SQL Server database if it does not exist yet."""
-    master_url = (
-        f"mssql+pyodbc://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}:{DB_PORT}/master?{_OPTS}"
-    )
-    tmp = create_engine(master_url, isolation_level="AUTOCOMMIT")
-    with tmp.connect() as conn:
-        conn.execute(
-            text(
-                f"IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'{DB_NAME}') "
-                f"CREATE DATABASE [{DB_NAME}]"
-            )
-        )
-    tmp.dispose()
 
 
 def get_db():
