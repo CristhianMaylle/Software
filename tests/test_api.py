@@ -1,6 +1,5 @@
 from fastapi.testclient import TestClient
 
-
 # ---------------------------------------------------------------------------
 # POST /api/v1/transactions
 # ---------------------------------------------------------------------------
@@ -69,7 +68,11 @@ def test_list_transactions_pagination(client: TestClient) -> None:
     for i in range(5):
         client.post(
             "/api/v1/transactions",
-            json={"amount": float(100 * (i + 1)), "type": "ingreso", "description": f"tx-{i}"},
+            json={
+                "amount": float(100 * (i + 1)),
+                "type": "ingreso",
+                "description": f"tx-{i}",
+            },
         )
     response = client.get("/api/v1/transactions?skip=0&limit=3")
     assert response.status_code == 200

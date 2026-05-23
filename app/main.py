@@ -2,15 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.database import Base, engine, ensure_database
+from app.database import Base, engine
 from app.routers import balance, transactions
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Skip SQL Server-specific init when running under SQLite (tests)
-    if engine.dialect.name != "sqlite":
-        ensure_database()
+    # La base de datos la crea el contenedor PostgreSQL (POSTGRES_DB) o existe
+    # ya en el server gestionado; aqui solo aseguramos el schema (tablas).
     Base.metadata.create_all(bind=engine)
     yield
 

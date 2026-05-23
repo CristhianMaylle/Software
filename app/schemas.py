@@ -5,7 +5,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TransactionCreate(BaseModel):
-    amount: float = Field(..., gt=0, description="Transaction amount (must be positive)")
+    amount: float = Field(
+        ..., gt=0, description="Transaction amount (must be positive)"
+    )
     type: Literal["ingreso", "egreso"] = Field(
         ..., description="Transaction type: 'ingreso' (income) or 'egreso' (expense)"
     )

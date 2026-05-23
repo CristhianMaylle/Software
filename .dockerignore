@@ -1,8 +1,9 @@
-.env
-.venv/
-venv/
+.git
+.github
+.venv
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
-*.egg-info/
+.env
+*.md

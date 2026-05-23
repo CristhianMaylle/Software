@@ -7,16 +7,17 @@ Sin frontend — toda la interacción se hace desde **Swagger UI**.
 
 ## Levantar con Docker (recomendado)
 
-Levanta la API + SQL Server con un solo comando:
+Copia `.env.example` a `.env` y luego levanta la API + PostgreSQL con un solo comando:
 
 ```bash
+cp .env.example .env   # ajusta DB_PASSWORD
 docker compose up --build
 ```
 
 Swagger UI disponible en: **http://localhost:8000/docs**
 
-> SQL Server arranca en el puerto `1433` con usuario `sa` y contraseña `YourPassword!123`
-> (configurables en el archivo `.env`).
+> PostgreSQL 18 corre como servicio interno `db` (puerto `5432`, sin exponer al host).
+> Usuario, contraseña y nombre de base se configuran en el archivo `.env`.
 
 Para bajar todo y borrar datos:
 ```bash
@@ -29,8 +30,8 @@ docker compose down -v
 
 ### Requisitos
 - Python 3.12+
-- SQL Server accesible (local o en Docker)
-- [ODBC Driver 18 for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)
+- PostgreSQL accesible (local o en Docker). El driver `psycopg` se instala con pip;
+  no necesitas paquetes del sistema.
 
 ### Setup
 
@@ -38,14 +39,14 @@ docker compose down -v
 pip install -r requirements.txt
 ```
 
-Edita `.env` con tus credenciales reales (cambia `DB_SERVER=localhost` si SQL Server corre localmente):
+Edita `.env` con tus credenciales reales (usa `DB_SERVER=localhost` si Postgres corre localmente):
 
 ```env
 DB_SERVER=localhost
-DB_PORT=1433
-DB_NAME=FinanceControl
-DB_USER=sa
-DB_PASSWORD=YourPassword!123
+DB_PORT=5432
+DB_NAME=finance_control
+DB_USER=finance
+DB_PASSWORD=tu_password_seguro
 ```
 
 Inicia la API (la base de datos y las tablas se crean automáticamente al arrancar):
@@ -104,20 +105,30 @@ GET /api/v1/balance
 ## Estructura del proyecto
 
 ```
-FinanceControl/
+finance-control-api/
 ├── app/
-│   ├── main.py            # Entrypoint FastAPI + lifespan (crea BD y tablas)
-│   ├── database.py        # Engine SQLAlchemy, ensure_database(), get_db()
+│   ├── main.py            # Entrypoint FastAPI + lifespan (crea tablas)
+│   ├── database.py        # Engine SQLAlchemy (PostgreSQL/psycopg), get_db()
 │   ├── models.py          # Modelo ORM Transaction
 │   ├── schemas.py         # Schemas Pydantic
 │   └── routers/
 │       ├── transactions.py
 │       └── balance.py
 ├── tests/
-│   ├── conftest.py        # Fixture SQLite en memoria
-│   └── test_api.py
-├── docker-compose.yml     # API + SQL Server
+│   ├── conftest.py        # Fixture SQLite en memoria (tests unitarios)
+│   ├── test_api.py
+│   └── integration_pg.py  # Contract test contra la API live (PostgreSQL real)
+├── docker-compose.yml     # API + PostgreSQL 18 + labels Traefik
 ├── Dockerfile
-├── .env                   # Variables de conexión (no subir a git)
+├── .env.example           # Plantilla de variables (copiar a .env, no versionado)
 └── requirements.txt
 ```
+
+---
+
+## Despliegue en producción
+
+Desplegado tras Traefik v3 + Cloudflare en **https://oswalbot.itelcore.org**
+(Swagger UI en `https://oswalbot.itelcore.org/docs`). La base PostgreSQL corre
+como contenedor interno sin puertos expuestos; solo Traefik alcanza la API por la
+red `web`.
